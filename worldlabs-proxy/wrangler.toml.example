@@ -1,0 +1,12 @@
+name = "queuemerge-worldlabs-proxy"
+main = "worker.js"
+compatibility_date = "2026-08-22"
+
+[vars]
+# Set this to the exact GitHub Pages origin, with no trailing slash.
+# Example: https://YOUR-USERNAME.github.io
+ALLOWED_ORIGIN = "https://YOUR-USERNAME.github.io"
+
+# Draft is much cheaper/faster for a public hackathon demo.
+# Change to marble-1.1 for higher-quality worlds.
+WORLD_LABS_MODEL = "marble-1.0-draft"

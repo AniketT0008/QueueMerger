@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QueueMerge — office hours</title>
+<style>
+/* Tokens — chalkboard / ticket stub / sticky / grade pen */
+:root {
+  --board: #1E3A34;
+  --chalk: #F2EFE6;
+  --stub-amber: #C47A12;
+  --stub-face: #F7E7C4;      /* light stub fill: ink on this passes AA */
+  --ink: #1C1917;
+  --resolved: #2F6B3A;
+  --wrong: #9B2C2C;
+  --cork: #8B6914;
+  --sticky: #FFE566;
+  --muted: #4A524E;
+  --line: #C9C4B8;
+  --shadow: 0 10px 28px rgba(30, 58, 52, 0.18);
+  --font-display: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --font-body: Georgia, "Times New Roman", Times, serif;
+  --font-mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(139, 105, 20, 0.12), transparent 55%),
+    linear-gradient(180deg, #2a4a43 0%, var(--board) 28%, #16302c 100%);
+}
+
+a { color: inherit; }
+button, a.btn { font: inherit; cursor: pointer; }
+button:focus-visible,
+a:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--stub-amber);
+  outline-offset: 3px;
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+/* —— Top bar —— */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 18px;
+  padding: 4px 2px;
+}
+.brand {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--chalk);
+}
+.brand-mark {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px dashed rgba(242, 239, 230, 0.45);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(242, 239, 230, 0.85);
+  vertical-align: middle;
+  transform: rotate(-2deg);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.btn-live {
+  background: var(--stub-amber);
+  color: var(--ink);
+  border-color: #9a5f0c;
+  box-shadow: 0 2px 0 #9a5f0c;
+}
+.btn-live:hover { filter: brightness(1.05); }
+.btn-primary {
+  width: 100%;
+  background: var(--chalk);
+  color: var(--board);
+  border-color: var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
+}
+.btn-primary:hover { transform: translateY(1px); box-shadow: 0 2px 0 var(--ink); }
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--chalk);
+  border: 1.5px dashed rgba(242, 239, 230, 0.5);
+}
+.btn-secondary:hover { background: rgba(242, 239, 230, 0.08); }
+.btn-linkish {
+  width: 100%;
+  background: transparent;
+  color: rgba(242, 239, 230, 0.75);
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 4px;
+}
+.btn-sm {
+  padding: 7px 11px;
+  font-size: 13px;
+  border-radius: 3px;
+  border: 1.5px solid var(--line);
+  background: var(--chalk);
+  color: var(--ink);
+  font-weight: 700;
+}
+.btn-resolve {
+  background: var(--resolved);
+  color: #F2EFE6;
+  border-color: #245530;
+}
+.btn-resolve:hover { filter: brightness(1.06); }
+.btn-wrong {
+  background: var(--chalk);
+  color: var(--wrong);
+  border-color: var(--wrong);
+  border-style: solid;
+}
+.btn-wrong:hover { background: #f8e8e8; }
+.btn-ghost { background: transparent; }
+
+.lede {
+  margin: 0 0 16px;
+  max-width: 36rem;
+  color: rgba(242, 239, 230, 0.88);
+  font-size: 1.05rem;
+}
+
+/* —— Main stage: chalkboard surface —— */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  gap: 16px;
+  align-items: start;
+}
+
+.board {
+  background: var(--board);
+  border: 10px solid #142823;
+  border-radius: 6px;
+  box-shadow: var(--shadow), inset 0 0 80px rgba(0, 0, 0, 0.2);
+  padding: 16px 16px 20px;
+  min-height: 420px;
+  position: relative;
+}
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(242, 239, 230, 0.08);
+  pointer-events: none;
+}
+.chalk-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: rgba(242, 239, 230, 0.7);
+  margin: 0 0 10px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin-bottom: 14px;
+  border: 1.5px solid rgba(242, 239, 230, 0.35);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.view-toggle button {
+  border: none;
+  background: transparent;
+  color: rgba(242, 239, 230, 0.75);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+}
+.view-toggle button[aria-pressed="true"] {
+  background: var(--chalk);
+  color: var(--board);
+}
+
+/* FIFO strip */
+.fifo {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 4px;
+}
+.board[data-view="fifo"] .fifo { display: flex; }
+.board[data-view="fifo"] .clusters { display: none; }
+.board[data-view="clusters"] .fifo { display: none; }
+.board[data-view="clusters"] .clusters { display: block; }
+
+.fifo-ticket {
+  background: var(--stub-face);
+  color: var(--ink);
+  border: 1.5px solid var(--stub-amber);
+  border-left: 4px solid var(--stub-amber);
+  padding: 8px 10px;
+  min-width: 88px;
+  font-size: 13px;
+  box-shadow: 1px 2px 0 rgba(0,0,0,0.15);
+  animation: ticketIn 0.35s ease both;
+}
+.fifo-ticket .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+.fifo-ticket .who { font-weight: 700; }
+.fifo-ticket .q {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-hint {
+  color: rgba(242, 239, 230, 0.65);
+  font-size: 15px;
+  padding: 28px 8px;
+  text-align: center;
+}
+
+/* Cluster cards */
+.clusters { display: block; }
+.cluster {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  background: var(--chalk);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  animation: clusterIn 0.4s ease both;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.cluster.is-leaving-resolved {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+.cluster.is-leaving-wrong {
+  opacity: 0;
+  transform: translateX(12px);
+}
+.cluster-body { min-width: 0; }
+.rank {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+.explain { margin: 0 0 6px; font-size: 15px; }
+.meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+
+/* Signature: perforated ticket stub */
+.stub {
+  position: relative;
+  width: 72px;
+  flex-shrink: 0;
+  background: var(--stub-face);
+  color: var(--ink);
+  border: 2px solid var(--stub-amber);
+  padding: 10px 6px 12px;
+  text-align: center;
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stub::before,
+.stub::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 0;
+  border-top: 2px dashed var(--stub-amber);
+  opacity: 0.85;
+}
+.stub::before { top: 6px; }
+.stub::after { bottom: 6px; }
+.stub:hover {
+  transform: translateY(-3px) rotate(-1.5deg);
+  box-shadow: 3px 6px 0 rgba(0,0,0,0.16);
+}
+.stub-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-top: 6px;
+}
+.stub-lbl {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.stub-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+/* Sticky notes on cork strip */
+.cork {
+  background: linear-gradient(135deg, #9a7520, var(--cork));
+  border-radius: 3px;
+  padding: 10px;
+  margin-top: 4px;
+}
+.cork h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.9);
+  font-weight: 400;
+}
+.sticky {
+  background: var(--sticky);
+  color: var(--ink);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  box-shadow: 1px 2px 0 rgba(0,0,0,0.15);
+  transform: rotate(-0.8deg);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.sticky:nth-child(even) { transform: rotate(1deg); background: #ffe98a; }
+.sticky .votes {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.sticky-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+.noteform {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+.noteform textarea {
+  width: 100%;
+  min-height: 52px;
+  border: 1.5px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  padding: 8px;
+  font: inherit;
+  font-size: 13px;
+  background: #fffef5;
+  resize: vertical;
+  color: var(--ink);
+}
+
+.sim {
+  display: none;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(242, 239, 230, 0.1);
+  border: 1px dashed rgba(242, 239, 230, 0.35);
+  color: var(--chalk);
+  border-radius: 4px;
+}
+.sim.show { display: block; }
+.sim h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-family: var(--font-body);
+}
+.sim .hint { font-size: 13px; opacity: 0.8; margin: 0 0 8px; }
+.simrow {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 0.7fr);
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(242, 239, 230, 0.2);
+  font-size: 14px;
+  font-family: var(--font-mono);
+}
+.simrow.head {
+  font-family: var(--font-body);
+  font-size: 12px;
+  opacity: 0.7;
+  border-top: none;
+}
+
+/* Clipboard sidebar */
+.clipboard {
+  background: var(--chalk);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 14px 14px 16px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 14px;
+  border: 1px solid var(--line);
+}
+.clip-top {
+  height: 14px;
+  margin: -6px auto 12px;
+  width: 42%;
+  background: #6b7280;
+  border-radius: 0 0 6px 6px;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.25);
+}
+.clipboard h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 400;
+}
+.clipboard .clip-lede {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.clipboard .stack { display: flex; flex-direction: column; gap: 8px; }
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.stat .l {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.stat .v {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.footer-quiet {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(242, 239, 230, 0.45);
+}
+
+@keyframes ticketIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes clusterIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.cluster.shaking { animation: wrongShake 0.28s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .stub:hover { transform: none; }
+}
+
+/* Mobile: stack — board first, clipboard below */
+@media (max-width: 800px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+  .clipboard {
+    position: static;
+    order: 2;
+  }
+  .board { order: 1; }
+  .simrow { grid-template-columns: 1fr 1fr; }
+  .brand-mark { display: none; } /* avoid long Comic Sans on small screens */
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <h1 class="brand">QueueMerge <span class="brand-mark" aria-hidden="true">NEXT UP</span></h1>
+    <a class="btn btn-live" href="https://queuemerger-aaurranskplmeavmvsdjqy.streamlit.app/" target="_blank" rel="noopener">Open live TA app →</a>
+  </header>
+  <p class="lede">Same seven students. As a flat FIFO line — or grouped by the misconception they share. Higher ticket score means help that group next.</p>
+
+  <div class="stage">
+    <section class="board" id="board" data-view="clusters" aria-label="Office-hour board">
+      <p class="chalk-label" aria-hidden="true">OFFICE HOURS · GROUP BY CAUSE</p>
+      <div class="view-toggle" role="group" aria-label="Queue view">
+        <button type="button" id="view-fifo" aria-pressed="false">FIFO line</button>
+        <button type="button" id="view-clusters" aria-pressed="true">Grouped</button>
+      </div>
+
+      <div class="fifo" id="fifo" aria-live="polite"></div>
+      <div class="clusters" id="clusters" aria-live="polite"></div>
+
+      <div class="sim" id="simbox">
+        <h3>What if I help this next?</h3>
+        <p class="hint">Quick comparison before you walk to the whiteboard.</p>
+        <div class="simrow head"><span>Choice</span><span>Cleared</span><span>Time</span><span>Wait</span></div>
+        <div class="simrow"><span>Loop-boundary group</span><span>~3.4</span><span>~6m</span><span>~8m</span></div>
+        <div class="simrow"><span>Reference-vs-copy</span><span>~1.3</span><span>~5.5m</span><span>~10m</span></div>
+        <div class="simrow"><span>Longest single wait</span><span>~1.0</span><span>~5m</span><span>~11m</span></div>
+      </div>
+    </section>
+
+    <aside class="clipboard" aria-label="TA clipboard">
+      <div class="clip-top" aria-hidden="true"></div>
+      <h2>CLIPBOARD</h2>
+      <p class="clip-lede">Load the sample hour, then triage the top stub.</p>
+      <div class="stack">
+        <button type="button" class="btn btn-primary" id="load">Load sample queue</button>
+        <button type="button" class="btn btn-secondary" id="simulate">Compare choices</button>
+        <button type="button" class="btn btn-secondary" id="reset">Reset preview</button>
+        <a class="btn-linkish" href="https://queuemerger-aaurranskplmeavmvsdjqy.streamlit.app/" target="_blank" rel="noopener">Live Gemini backend</a>
+      </div>
+      <div class="stats" aria-label="Queue stats">
+        <div class="stat"><div class="l">GROUPS</div><div class="v" id="active">0</div></div>
+        <div class="stat"><div class="l">STUDENTS</div><div class="v" id="students">0</div></div>
+        <div class="stat"><div class="l">AVG SUPM</div><div class="v" id="avgsupm">—</div></div>
+        <div class="stat"><div class="l">MAX WAIT</div><div class="v" id="longwait">—</div></div>
+      </div>
+    </aside>
+  </div>
+
+  <p class="footer-quiet">Preview only · full TA app on Streamlit</p>
+</div>
+
+<script>
+(function () {
+  const students = [
+    { name: "Ava", q: "loop off by one", n: "01" },
+    { name: "Liam", q: "extra blank line", n: "02" },
+    { name: "Noah", q: "misses last element", n: "03" },
+    { name: "Emma", q: "copy changes both", n: "04" },
+    { name: "Mia", q: "recursion crash", n: "05" },
+    { name: "Ethan", q: "index out of range", n: "06" },
+    { name: "Zoe", q: "no base case", n: "07" }
+  ];
+
+  const base = [
+    { id: 1, supm: 0.48, size: 2, wait: 12, name: "loop-boundary-inclusive",
+      text: "Two students: the loop walks one step past the last valid index.",
+      notes: [
+        { id: 101, text: "Draw indices 0..n-1, then contrast len(arr) with the last index.", votes: 4 },
+        { id: 102, text: "Ask them to predict i on the final iteration before running it.", votes: 2 }
+      ]},
+    { id: 2, supm: 0.31, size: 2, wait: 9, name: "index-out-of-range",
+      text: "Two students: indexing one past the end of the list (IndexError).",
+      notes: [{ id: 201, text: "Four-element list: label length 4 and last index 3.", votes: 3 }] },
+    { id: 3, supm: 0.25, size: 1, wait: 8, name: "reference-vs-copy",
+      text: "One student: b = a aliases the list — both names share one object.",
+      notes: [] },
+    { id: 4, supm: 0.20, size: 2, wait: 7, name: "recursion-missing-base-case",
+      text: "Two students: recursion with no reachable stopping condition.",
+      notes: [{ id: 401, text: "Trace three calls; ask what must get smaller each time.", votes: 5 }] }
+  ];
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem("qm-demo-state");
+      if (!raw) return structuredClone(base);
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || !parsed.length) return structuredClone(base);
+      return parsed;
+    } catch (err) {
+      try { localStorage.removeItem("qm-demo-state"); } catch (e) { /* ignore */ }
+      return structuredClone(base);
+    }
+  }
+
+  let state = loadState();
+  let epoch = 0;
+  let loadTimer = null;
+  let removeBusy = false; // one leave animation at a time (blocks double-resolve eating two stubs)
+  const board = document.getElementById("board");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function bumpEpoch() {
+    epoch += 1;
+    removeBusy = false;
+    if (loadTimer) {
+      clearTimeout(loadTimer);
+      loadTimer = null;
+    }
+    return epoch;
+  }
+
+  function save() {
+    localStorage.setItem("qm-demo-state", JSON.stringify(state));
+  }
+
+  function setView(view) {
+    board.dataset.view = view;
+    document.getElementById("view-fifo").setAttribute("aria-pressed", view === "fifo" ? "true" : "false");
+    document.getElementById("view-clusters").setAttribute("aria-pressed", view === "clusters" ? "true" : "false");
+  }
+
+  function renderFifo() {
+    const el = document.getElementById("fifo");
+    el.innerHTML = "";
+    students.forEach(function (s, i) {
+      const t = document.createElement("div");
+      t.className = "fifo-ticket";
+      if (!reduceMotion) t.style.animationDelay = (i * 0.04) + "s";
+      t.innerHTML = '<div class="n">#' + esc(s.n) + '</div><div class="who">' + esc(s.name) + '</div><span class="q">' + esc(s.q) + "</span>";
+      el.appendChild(t);
+    });
+  }
+
+  function renderClusters() {
+    const wrap = document.getElementById("clusters");
+    wrap.innerHTML = "";
+    const sorted = state.slice().sort(function (a, b) { return b.supm - a.supm; });
+
+    if (!sorted.length) {
+      wrap.innerHTML = '<p class="empty-hint">Queue cleared. Load the sample hour again.</p>';
+    }
+
+    sorted.forEach(function (c, i) {
+      const el = document.createElement("article");
+      el.className = "cluster";
+      el.dataset.id = String(c.id);
+      if (!reduceMotion) el.style.animationDelay = (i * 0.05) + "s";
+      const rank = i === 0 ? "HELP THIS NEXT" : ("#" + (i + 1) + " IN LINE");
+      const stubTag = i === 0 ? "NEXT" : "WAIT";
+
+      el.innerHTML =
+        '<div class="stub" title="SUPM — students unblocked per TA-minute">' +
+          '<div class="stub-tag">' + esc(stubTag) + "</div>" +
+          '<div class="stub-val">' + esc(c.supm.toFixed(2)) + "</div>" +
+          '<div class="stub-lbl">supm</div>' +
+        "</div>" +
+        '<div class="cluster-body">' +
+          '<p class="rank">' + esc(rank) + " · " + esc(c.name) + "</p>" +
+          '<p class="explain">' + esc(c.text) + "</p>" +
+          '<p class="meta">' + esc(c.size) + " students · wait " + esc(c.wait) + "m</p>" +
+          '<div class="row-actions">' +
+            '<button type="button" class="btn-sm simone">Compare choices</button>' +
+            '<button type="button" class="btn-sm btn-resolve resolve">Mark resolved</button>' +
+            '<button type="button" class="btn-sm btn-wrong wrong">Wrong group</button>' +
+          "</div>" +
+          '<div class="cork">' +
+            "<h3>EXPLANATION MEMORY</h3>" +
+            '<div class="notes"></div>' +
+            '<div class="noteform">' +
+              '<textarea placeholder="What teaching move worked?" aria-label="Save teaching note"></textarea>' +
+              '<button type="button" class="btn-sm add">Pin note</button>' +
+            "</div>" +
+          "</div>" +
+        "</div>";
+
+      const noteWrap = el.querySelector(".notes");
+      const notes = c.notes.slice().sort(function (a, b) { return b.votes - a.votes; });
+      if (!notes.length) {
+        noteWrap.innerHTML = '<div class="sticky" style="opacity:0.85">No tip pinned yet — add one after you help them.</div>';
+      }
+      notes.forEach(function (n) {
+        const row = document.createElement("div");
+        row.className = "sticky";
+        row.innerHTML =
+          '<div class="sticky-row"><div>' + esc(n.text) +
+          '<div class="votes">' + esc(n.votes) + " votes</div></div>" +
+          '<button type="button" class="btn-sm" aria-label="Upvote note">👍</button></div>';
+        row.querySelector("button").onclick = function () {
+          n.votes += 1;
+          save();
+          render();
+        };
+        noteWrap.appendChild(row);
+      });
+
+      el.querySelector(".add").onclick = function () {
+        const ta = el.querySelector("textarea");
+        const t = ta.value.trim();
+        if (!t) return;
+        c.notes.push({ id: Date.now(), text: t, votes: 0 });
+        save();
+        render();
+      };
+      el.querySelector(".simone").onclick = function () {
+        document.getElementById("simbox").classList.add("show");
+        setView("clusters");
+      };
+
+      function removeCluster(mode) {
+        if (removeBusy || el.dataset.leaving === "1") return;
+        removeBusy = true;
+        el.dataset.leaving = "1";
+        el.querySelectorAll("button").forEach(function (btn) { btn.disabled = true; });
+        // Soft-disable other stubs so a queued click can't resolve the next card.
+        wrap.querySelectorAll(".cluster:not([data-leaving='1']) button").forEach(function (btn) {
+          btn.disabled = true;
+        });
+        const myEpoch = epoch;
+        const clusterId = c.id;
+        const finish = function () {
+          // Ignore stale animations after Load / Reset replaced the queue.
+          if (myEpoch !== epoch) return;
+          state = state.filter(function (x) { return x.id !== clusterId; });
+          removeBusy = false;
+          save();
+          render();
+        };
+        if (reduceMotion) {
+          finish();
+          return;
+        }
+        if (mode === "wrong") {
+          el.classList.add("shaking");
+          setTimeout(function () {
+            if (myEpoch !== epoch) return;
+            el.classList.add("is-leaving-wrong");
+            setTimeout(finish, 280);
+          }, 280);
+        } else {
+          el.classList.add("is-leaving-resolved");
+          setTimeout(finish, 320);
+        }
+      }
+
+      el.querySelector(".resolve").onclick = function () { removeCluster("resolved"); };
+      el.querySelector(".wrong").onclick = function () { removeCluster("wrong"); };
+
+      wrap.appendChild(el);
+    });
+
+    document.getElementById("active").textContent = String(sorted.length);
+    const studentsN = sorted.reduce(function (a, c) { return a + c.size; }, 0);
+    document.getElementById("students").textContent = String(studentsN);
+    const avg = sorted.length ? sorted.reduce(function (a, c) { return a + c.supm; }, 0) / sorted.length : 0;
+    document.getElementById("avgsupm").textContent = sorted.length ? avg.toFixed(2) : "—";
+    const long = sorted.length ? Math.max.apply(null, sorted.map(function (c) { return c.wait; })) : 0;
+    document.getElementById("longwait").textContent = sorted.length ? (long + "m") : "—";
+  }
+
+  function render() {
+    renderFifo();
+    renderClusters();
+  }
+
+  document.getElementById("view-fifo").onclick = function () { setView("fifo"); };
+  document.getElementById("view-clusters").onclick = function () { setView("clusters"); };
+
+  document.getElementById("load").onclick = function () {
+    bumpEpoch();
+    state = structuredClone(base);
+    save();
+    document.getElementById("simbox").classList.remove("show");
+    setView("fifo");
+    render();
+    if (!reduceMotion) {
+      const myEpoch = epoch;
+      loadTimer = setTimeout(function () {
+        if (myEpoch !== epoch) return;
+        setView("clusters");
+        loadTimer = null;
+      }, 650);
+    } else {
+      setView("clusters");
+    }
+  };
+
+  document.getElementById("simulate").onclick = function () {
+    document.getElementById("simbox").classList.toggle("show");
+    setView("clusters");
+  };
+
+  document.getElementById("reset").onclick = function () {
+    bumpEpoch();
+    localStorage.removeItem("qm-demo-state");
+    state = structuredClone(base);
+    document.getElementById("simbox").classList.remove("show");
+    setView("clusters");
+    render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
